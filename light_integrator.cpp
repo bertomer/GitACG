@@ -83,10 +83,12 @@ public:
 
                 int randomIdx = rand() % luminaires.size();
                 lRec.luminaire = luminaires.at(randomIdx);
-                Mesh::samplePosition(sample, lRec.p, lRec.n);
 
+                // where is the mesh object?
+                Mesh *m = (Mesh*) luminaires.at(randomIdx)->getParent();
+                m->samplePosition(sample, lRec.p, lRec.n);
+                float pdf = m->pdf();
 
-                Mesh::pdf();
 
 
                 return Color3f(0.0f);
@@ -113,7 +115,9 @@ public:
                 //      sampleLights(const Scene *, LuminaireQueryRecord &, const Point2d &)
                 // which you also have to implement
 
-                LuminaireQueryRecord lRec();
+
+                // need to init lRec.ref
+                LuminaireQueryRecord lRec;
                 sampleLights(scene, lRec, sampler->next2D());
 
 

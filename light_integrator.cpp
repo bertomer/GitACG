@@ -20,7 +20,7 @@ NORI_NAMESPACE_BEGIN
 
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // put your group number here!
-#define GROUP_NUMBER 0
+#define GROUP_NUMBER 13
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 GROUP_NAMESPACE_BEGIN()
@@ -34,6 +34,7 @@ public:
 
         LightIntegrator(const PropertyList &propList) {
                 Q_UNUSED(propList);
+                srand(time(NULL));
         }
 
         /// Return the mesh corresponding to a given luminaire
@@ -58,8 +59,8 @@ public:
          * 
          * \return the sampled light radiance including its geometric, visibility and pdf weights
          */
-        inline Color3f sampleLights(const Scene *scene, LuminaireQueryRecord &lRec, const Point2d &_sample) const {
-                Point2d sample(_sample);
+        inline Color3f sampleLights(const Scene *scene, LuminaireQueryRecord &lRec, const Point2f &_sample) const {
+                Point2f sample(_sample);
                 const std::vector<Luminaire *> &luminaires = scene->getLuminaires();
 
                 if (luminaires.size() == 0)
@@ -80,7 +81,12 @@ public:
 
                 // 4. Return radiance emitted from luminaire multiplied by the appropriate terms G, V ...
 
-                //scene->getLuminaires()
+                int randomIdx = rand() % luminaires.size();
+                lRec.luminaire = luminaires.at(randomIdx);
+                Mesh::samplePosition(sample, lRec.p, lRec.n);
+
+
+                Mesh::pdf();
 
 
                 return Color3f(0.0f);
@@ -103,9 +109,14 @@ public:
                 const Mesh *mesh = its.mesh;
                 const BSDF *bsdf = mesh->getBSDF();
 
-                /// TODO implement direct lighting using light sampling using
+                // TODO implement direct lighting using light sampling using
                 //      sampleLights(const Scene *, LuminaireQueryRecord &, const Point2d &)
                 // which you also have to implement
+
+                LuminaireQueryRecord lRec();
+                sampleLights(scene, lRec, sampler->next2D());
+
+
 
                 return Color3f(0.0f);
         }
@@ -117,5 +128,5 @@ public:
 
 GROUP_NAMESPACE_END
 
-NORI_REGISTER_GROUP_CLASS(LightIntegrator, "light");
+NORI_REGISTER_GROUP_CLASS(LightIntegrator, "light")
 NORI_NAMESPACE_END

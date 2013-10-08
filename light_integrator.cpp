@@ -79,6 +79,10 @@ public:
                 // use Mesh::pdf to get the probability of choosing the point in Mesh::samplePosition
 
                 // 4. Return radiance emitted from luminaire multiplied by the appropriate terms G, V ...
+
+                //scene->getLuminaires()
+
+
                 return Color3f(0.0f);
         }
 

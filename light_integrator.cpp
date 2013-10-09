@@ -109,7 +109,7 @@ public:
                 // cos theta prime prime :) (luminaire's side)
                 float cosThetaI = std::max(0.0f, lRec.n.dot(-lRec.d));
 
-                return bigV*cosThetaI*lRec.luminaire->getColor() / ((lRec.dist * lRec.dist) * lRec.pdf);
+                return bigV*cosThetaI*lRec.luminaire->eval(lRec) / ((lRec.dist * lRec.dist) * lRec.pdf);
         }
 
         /**
@@ -134,6 +134,7 @@ public:
                 // which you also have to implement
 
                 /* If we hit a luminaire, use its related color information */
+
                 if (mesh->isLuminaire()) {
                         const Luminaire *luminaire = its.mesh->getLuminaire();
                         LuminaireQueryRecord lRec(luminaire, ray.o, its.p, its.shFrame.n);
@@ -144,7 +145,7 @@ public:
                 lRec.ref = its.p;
                 Color3f sl = sampleLights(scene, lRec, sampler->next2D());
 
-
+                BSDFQueryRecord bRec(its.toLocal(-ray.d), lRec.d, ESolidAngle);
 
                 return sl;
         }

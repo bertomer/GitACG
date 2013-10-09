@@ -95,17 +95,22 @@ public:
                 lRec.dist = lRec.d.norm();
                 lRec.d /= lRec.dist;
 
+                // This shit doesn't work
                 Ray3f ray;
                 ray.o = lRec.ref;
                 ray.d = lRec.d;
 
-
                 float bigV;
                 Intersection its;
-                if(scene->rayIntersect(ray, its))
-                    qDebug()<<"yes";
+                if(scene->rayIntersect(ray, its)){
+                    qDebug()<<"intersect with some shit";
+                    bigV = 1;
+                }
 
-                return lRec.luminaire->getColor()*bigV / (lRec.dist * lRec.dist);
+                // cos theta prime prime :)
+                float cosThetaI = std::max(0.0f, lRec.n.dot(-lRec.d));
+
+                return lRec.luminaire->getColor()*bigV*cosThetaI / (lRec.dist * lRec.dist);
         }
 
         /**

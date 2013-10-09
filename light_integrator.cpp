@@ -95,7 +95,6 @@ public:
                 lRec.dist = lRec.d.norm();
                 lRec.d /= lRec.dist;
 
-                // This shit doesn't work
                 Ray3f shadowRay(lRec.ref, lRec.d);
 
                 float bigV=0;

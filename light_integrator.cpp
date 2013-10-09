@@ -84,14 +84,28 @@ public:
                 int randomIdx = rand() % luminaires.size();
                 lRec.luminaire = luminaires.at(randomIdx);
 
-                // where is the mesh object?
                 Mesh *m = (Mesh*) luminaires.at(randomIdx)->getParent();
+
+                // lRec.p is the sample point on the mesh
                 m->samplePosition(sample, lRec.p, lRec.n);
-                float pdf = m->pdf();
+                lRec.pdf = m->pdf();
+
+                // lRec.d = direction vector from ref to p
+                lRec.d = lRec.p - lRec.ref;
+                lRec.dist = lRec.d.norm();
+                lRec.d /= lRec.dist;
+
+                Ray3f ray;
+                ray.o = lRec.ref;
+                ray.d = lRec.d;
 
 
+                float bigV;
+                Intersection its;
+                if(scene->rayIntersect(ray, its))
+                    qDebug()<<"yes";
 
-                return Color3f(0.0f);
+                return lRec.luminaire->getColor()*bigV / (lRec.dist * lRec.dist);
         }
 
         /**
@@ -116,8 +130,9 @@ public:
                 // which you also have to implement
 
 
-                // need to init lRec.ref
+                // lRec.ref = its.p ??????
                 LuminaireQueryRecord lRec;
+                lRec.ref = its.p;
                 sampleLights(scene, lRec, sampler->next2D());
 
 

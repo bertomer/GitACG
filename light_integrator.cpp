@@ -96,21 +96,21 @@ public:
                 lRec.d /= lRec.dist;
 
                 // This shit doesn't work
-                Ray3f ray;
-                ray.o = lRec.ref;
-                ray.d = lRec.d;
+                Ray3f shadowRay(lRec.ref, lRec.d);
 
-                float bigV;
+                float bigV=0;
                 Intersection its;
-                if(scene->rayIntersect(ray, its)){
-                    qDebug()<<"intersect with some shit";
-                    bigV = 1;
+                if(scene->rayIntersect(shadowRay, its)){
+                    if(its.mesh == m)
+                        bigV = 1;
+                    else
+                        bigV = 0;
                 }
 
-                // cos theta prime prime :)
+                // cos theta prime prime :) (luminaire's side)
                 float cosThetaI = std::max(0.0f, lRec.n.dot(-lRec.d));
 
-                return bigV*cosThetaI / (lRec.dist * lRec.dist);
+                return bigV*cosThetaI*lRec.luminaire->getColor() / ((lRec.dist * lRec.dist) * lRec.pdf);
         }
 
         /**
@@ -134,15 +134,20 @@ public:
                 //      sampleLights(const Scene *, LuminaireQueryRecord &, const Point2d &)
                 // which you also have to implement
 
+                /* If we hit a luminaire, use its related color information */
+                if (mesh->isLuminaire()) {
+                        const Luminaire *luminaire = its.mesh->getLuminaire();
+                        LuminaireQueryRecord lRec(luminaire, ray.o, its.p, its.shFrame.n);
+                        return luminaire->eval(lRec);
+                }
 
-                // lRec.ref = its.p ??????
                 LuminaireQueryRecord lRec;
                 lRec.ref = its.p;
-                sampleLights(scene, lRec, sampler->next2D());
+                Color3f sl = sampleLights(scene, lRec, sampler->next2D());
 
 
 
-                return Color3f(0.0f);
+                return sl;
         }
 
         QString toString() const {

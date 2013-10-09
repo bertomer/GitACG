@@ -110,7 +110,7 @@ public:
                 // cos theta prime prime :)
                 float cosThetaI = std::max(0.0f, lRec.n.dot(-lRec.d));
 
-                return lRec.luminaire->getColor()*bigV*cosThetaI / (lRec.dist * lRec.dist);
+                return bigV*cosThetaI / (lRec.dist * lRec.dist);
         }
 
         /**

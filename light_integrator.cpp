@@ -146,8 +146,12 @@ public:
                 Color3f sl = sampleLights(scene, lRec, sampler->next2D());
 
                 BSDFQueryRecord bRec(its.toLocal(-ray.d), lRec.d, ESolidAngle);
+                // TODO: bsdf->eval(bRec)...
 
-                return sl;
+                // cos theta prime (mesh's side)
+                float cosTheta = std::max(0.0f, its.shFrame.n.dot(lRec.d));
+
+                return sl*cosTheta;
         }
 
         QString toString() const {

@@ -3,7 +3,7 @@
  *******************************************************************************
  *  Copyright (c) 2013 Alexandre Kaspar <alexandre.kaspar@a3.epfl.ch>
  *  For Advanced Computer Graphics, at the LGG / EPFL
- * 
+ *
  *        DO NOT REDISTRIBUTE
  ***********************************************/
 
@@ -15,6 +15,7 @@
 #include <nori/sampler.h>
 #include <nori/scene.h>
 #include <vector>
+#include <time.h>
 
 NORI_NAMESPACE_BEGIN
 
@@ -47,16 +48,16 @@ public:
         /**
          * \brief Directly sample the lights, providing a sample weighted by 1/pdf
          * where pdf is the probability of sampling that given sample
-         * 
+         *
          * \param scene
          * the scene to work with
-         * 
+         *
          * \param lRec
          * the luminaire information storage
-         * 
+         *
          * \param _sample
          * the 2d uniform sample
-         * 
+         *
          * \return the sampled light radiance including its geometric, visibility and pdf weights
          */
         inline Color3f sampleLights(const Scene *scene, LuminaireQueryRecord &lRec, const Point2f &_sample) const {
@@ -69,11 +70,10 @@ public:
                 // TODO Implement the following steps
                 // and take care of using the good G, V terms to work with the Li method below
 
-                // 1. Choose one luminaire at random
 
 
-                // 2. Sample the position on the luminaire mesh
-                // using Mesh::samplePosition(const Point2d &sample, Point3f &p, Normal3f &n)
+
+
 
                 // 3. Compute geometry term G and visibility term on the luminaire's side (no cos(w) of the mesh side)
                 // as well as the pdf of that point being found
@@ -81,9 +81,12 @@ public:
 
                 // 4. Return radiance emitted from luminaire multiplied by the appropriate terms G, V ...
 
+                // 1. Choose one luminaire at random
                 int randomIdx = rand() % luminaires.size();
                 lRec.luminaire = luminaires.at(randomIdx);
 
+                // 2. Sample the position on the luminaire mesh
+                // using Mesh::samplePosition(const Point2d &sample, Point3f &p, Normal3f &n)
                 Mesh *m = (Mesh*) luminaires.at(randomIdx)->getParent();
 
                 // lRec.p is the sample point on the mesh
@@ -99,16 +102,19 @@ public:
 
                 float bigV=0;
                 Intersection its;
+                // it seems that we never have bigV == 0 ?
                 if(scene->rayIntersect(shadowRay, its)){
-                    if(its.mesh == m)
+                    if(its.mesh == m) {
                         bigV = 1;
-                    else
+                    } else {
                         bigV = 0;
+                    }
                 }
 
                 // cos theta prime prime :) (luminaire's side)
                 float cosThetaI = std::max(0.0f, lRec.n.dot(-lRec.d));
 
+                // return V * cos theta'' * fr(x", x', x) / (pdf(x") * dist²)
                 return bigV*cosThetaI*lRec.luminaire->eval(lRec) / ((lRec.dist * lRec.dist) * lRec.pdf);
         }
 
@@ -145,13 +151,12 @@ public:
                 lRec.ref = its.p;
                 Color3f sl = sampleLights(scene, lRec, sampler->next2D());
 
-                BSDFQueryRecord bRec(its.toLocal(-ray.d), lRec.d, ESolidAngle);
+                BSDFQueryRecord bRec(its.toLocal(-ray.d), its.toLocal(lRec.d), ESolidAngle);
                 // TODO: bsdf->eval(bRec)...
-
                 // cos theta prime (mesh's side)
                 float cosTheta = std::max(0.0f, its.shFrame.n.dot(lRec.d));
 
-                return sl*cosTheta;
+                return sl*bsdf->eval(bRec)*cosTheta;
         }
 
         QString toString() const {

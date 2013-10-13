@@ -102,7 +102,7 @@ public:
 
                 float bigV=0;
                 Intersection its;
-                // it seems that we never have bigV == 0 ?
+                // are we hiting the an obstacle or the luminaire?
                 if(scene->rayIntersect(shadowRay, its)){
                     if(its.mesh == m) {
                         bigV = 1;

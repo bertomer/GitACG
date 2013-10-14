@@ -67,19 +67,7 @@ public:
                 if (luminaires.size() == 0)
                         throw NoriException("LightIntegrator::sampleLights(): No luminaires were defined!");
 
-                // TODO Implement the following steps
                 // and take care of using the good G, V terms to work with the Li method below
-
-
-
-
-
-
-                // 3. Compute geometry term G and visibility term on the luminaire's side (no cos(w) of the mesh side)
-                // as well as the pdf of that point being found
-                // use Mesh::pdf to get the probability of choosing the point in Mesh::samplePosition
-
-                // 4. Return radiance emitted from luminaire multiplied by the appropriate terms G, V ...
 
                 // 1. Choose one luminaire at random
                 int randomIdx = rand() % luminaires.size();
@@ -92,6 +80,10 @@ public:
                 // lRec.p is the sample point on the mesh
                 m->samplePosition(sample, lRec.p, lRec.n);
                 lRec.pdf = m->pdf();
+
+                // 3. Compute geometry term G and visibility term on the luminaire's side (no cos(w) of the mesh side)
+                // as well as the pdf of that point being found
+                // use Mesh::pdf to get the probability of choosing the point in Mesh::samplePosition
 
                 // lRec.d = direction vector from ref to p
                 lRec.d = lRec.p - lRec.ref;
@@ -114,6 +106,7 @@ public:
                 // cos theta prime prime :) (luminaire's side)
                 float cosThetaI = std::max(0.0f, lRec.n.dot(-lRec.d));
 
+                // 4. Return radiance emitted from luminaire multiplied by the appropriate terms G, V ...
                 // return V * cos theta'' * fr(x", x', x) / (pdf(x") * dist²)
                 return bigV*cosThetaI*lRec.luminaire->eval(lRec) / ((lRec.dist * lRec.dist) * lRec.pdf);
         }
@@ -135,7 +128,6 @@ public:
                 const Mesh *mesh = its.mesh;
                 const BSDF *bsdf = mesh->getBSDF();
 
-                // TODO implement direct lighting using light sampling using
                 //      sampleLights(const Scene *, LuminaireQueryRecord &, const Point2d &)
                 // which you also have to implement
 
@@ -152,7 +144,7 @@ public:
                 Color3f sl = sampleLights(scene, lRec, sampler->next2D());
 
                 BSDFQueryRecord bRec(its.toLocal(-ray.d), its.toLocal(lRec.d), ESolidAngle);
-                // TODO: bsdf->eval(bRec)...
+
                 // cos theta prime (mesh's side)
                 float cosTheta = std::max(0.0f, its.shFrame.n.dot(lRec.d));
 

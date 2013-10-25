@@ -92,7 +92,6 @@ public:
                         // Visiblity + Geometric term on the luminaire's side
                         //      G(x, x', w, w') = ( cos(w) cos(w') ) / ||x - x'||^2
                         float G_lum = dp / dist2;
-
                         // 7. Radiance from luminaire
                         Color3f value = lRec.luminaire->getColor();
 
@@ -107,25 +106,40 @@ public:
                         Ray3f ray(_ray);
                         Intersection its;
                         Color3f result(0.0f), throughput(1.0f);
+                        BSDFQueryRecord bRecSample = NULL;
+                        Point3f previousIntersectionPoint;
+                        bool lastLoopIteration = false;
+                        int maxLoopIteration = 2;
+                        int i = 0;
+                        float q = 0.9;
 
-                      for (int i= 0; i < 2; i++) {
-                          if (!scene->rayIntersect(ray, its))
-                                  break;
+                        while(true) {
+                          if (i == maxLoopIteration) {
+                                lastLoopIteration = true;
+                          }
+                          if (!scene->rayIntersect(ray, its)) {
+                              if (scene->hasEnvLuminaire()) {
+                                      LuminaireQueryRecord lRecLum(
+                                              scene->getEnvLuminaire(), ray);
+                                      //result += throughput * lRecLum.luminaire->eval(lRecLum);
+                              }
+                              break;
+                          }
 
                           const Mesh *mesh = its.mesh;
                           const BSDF *bsdf = mesh->getBSDF();
 
                           /* If we hit a luminaire, use its related color information */
-                          if (mesh->isLuminaire()) {
+                          if (i == 0 && mesh->isLuminaire()) {
                                   const Luminaire *luminaire = its.mesh->getLuminaire();
                                   LuminaireQueryRecord lRec(luminaire, ray.o, its.p, its.shFrame.n);
                                   result += throughput * luminaire->eval(lRec);
                                   break;
                           }
-
                           /* Sample a luminaire directly */
                           LuminaireQueryRecord lRec(its.p);
                           Color3f direct = sampleLights(scene, lRec, sampler->next2D());
+
                           if ((direct.array() != 0).any()) {
                                   BSDFQueryRecord bRec(its.toLocal(-ray.d),
                                           its.toLocal(lRec.d), ESolidAngle);
@@ -133,12 +147,9 @@ public:
                                   result += throughput * direct* bsdf->eval(bRec)
                                                 * scene->evalTransmittance(Ray3f(lRec.ref, lRec.d, 0, lRec.dist), sampler)
                                                 * std::abs(Frame::cosTheta(bRec.wo));
-                                  //result += throughput;
-                                  //throughput /= lRec.luminaire->getColor();
                           }
-
                           /* Sample a direction with the brdf */
-                          BSDFQueryRecord bRecSample(its.toLocal(-ray.d));
+                          bRecSample = BSDFQueryRecord(its.toLocal(-ray.d));
                           Color3f tmp = bsdf->sample(bRecSample, sampler->next2D());
                           if((tmp.array() == 0).all()){
                                   break;
@@ -147,6 +158,13 @@ public:
 
                           /* Find the surface that is visible in the sampled direction */
                           ray = Ray3f(its.p, its.shFrame.toWorld(bRecSample.wo));
+
+                          if (i > 2) {
+                              if (rand()/RAND_MAX < q)
+                                  break;
+                              throughput /= (1-q);
+                          }
+                          i++;
                       }
                       return result;
 
